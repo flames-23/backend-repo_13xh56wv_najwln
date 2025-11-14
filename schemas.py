@@ -1,48 +1,60 @@
 """
-Database Schemas
+Database Schemas for Course Selling App
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model represents a MongoDB collection. The collection name is the
+lowercased class name. For example, Course -> "course" collection.
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 
-# Example schemas (replace with your own):
+
+class Course(BaseModel):
+    """
+    Courses collection schema
+    Collection name: "course"
+    """
+    title: str = Field(..., description="Course title")
+    subtitle: Optional[str] = Field(None, description="Short subtitle")
+    description: Optional[str] = Field(None, description="Detailed description")
+    price: float = Field(..., ge=0, description="Price in USD")
+    thumbnail_url: Optional[str] = Field(None, description="Poster/thumbnail image URL")
+    category: Optional[str] = Field(None, description="Course category")
+    level: Optional[str] = Field(None, description="Beginner / Intermediate / Advanced")
+    published: bool = Field(False, description="Whether this course is visible to users")
+    tags: Optional[List[str]] = Field(default_factory=list, description="Search tags")
+
+
+class Lesson(BaseModel):
+    """
+    Lessons collection schema
+    Collection name: "lesson"
+    """
+    course_id: str = Field(..., description="Related course ObjectId as string")
+    title: str = Field(..., description="Lesson title")
+    content: Optional[str] = Field(None, description="Lesson text/content (could be markdown)")
+    video_url: Optional[str] = Field(None, description="Optional video URL")
+    order: int = Field(0, ge=0, description="Display order within the course")
+    free_preview: bool = Field(False, description="Whether this lesson is free to preview")
+
+
+class Order(BaseModel):
+    """
+    Orders collection schema
+    Collection name: "order"
+    """
+    course_id: str = Field(..., description="Purchased course ObjectId as string")
+    buyer_name: str = Field(..., description="Customer full name")
+    buyer_email: str = Field(..., description="Customer email")
+    amount: float = Field(..., ge=0, description="Amount charged in USD")
+    status: str = Field("paid", description="paid, refunded, failed, pending")
+
 
 class User(BaseModel):
     """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
+    Users collection schema (optional, not used for auth in this demo)
+    Collection name: "user"
     """
     name: str = Field(..., description="Full name")
     email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
     is_active: bool = Field(True, description="Whether user is active")
-
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
-
-# Add your own schemas here:
-# --------------------------------------------------
-
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
